@@ -1,9 +1,9 @@
 #include "Controller.h"
 #include <PS4Controller.h>
 
-
-void Controller::Init() {
-    PS4.begin("5c:50:d9:e4:a5:c2");
+/************************* PUBLIC START **************************************/
+void Controller::Init(const std::string& mac) {
+    PS4.begin(mac.c_str());
 }
 
 bool Controller::RightBumperPressed() {
@@ -34,7 +34,7 @@ bool Controller::Connected() {
     return PS4.isConnected();
 }
 
-StickPosition Controller::GetLStickPosition() {
+StickPosition Controller::LStickPosition() {
     StickPosition stickPosition;
     stickPosition.x = PS4.LStickX(); /* Seems like the sticks are reversed? */
     stickPosition.y = PS4.LStickY();
@@ -56,3 +56,20 @@ void Controller::SetBatteryColor(Colors color) {
     u8 b = color & (Colors::Blue);
     PS4.setLed(r, g, b);
 }
+
+bool Controller::DPadUp() {
+    return PS4.Up();
+}
+
+bool Controller::DPadDown() {
+    return PS4.Down();
+}
+
+bool Controller::DPadLeft() {
+    return PS4.Left();
+}
+
+bool Controller::DPadRight() {
+    return PS4.Right();
+}
+/************************* PUBLIC END ****************************************/

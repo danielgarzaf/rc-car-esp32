@@ -2,12 +2,18 @@
 #define CONTROLLER_H
 
 #include "types.h"
+#include <string>
 
 
 class Controller {
-
 public:
-    void Init();
+    void Init(const std::string& mac);
+
+    /* D-Pad */
+    bool DPadUp();
+    bool DPadDown();
+    bool DPadLeft();
+    bool DPadRight();
 
     /* R Buttons */
     bool RightBumperPressed();
@@ -27,14 +33,13 @@ public:
 
     bool Connected();
 
-    StickPosition GetLStickPosition();
+    StickPosition LStickPosition();
     StickPosition GetRStickPosition();
 
     void SetBatteryColor(Colors color);
 
 private:
     Colors m_BatteryColor = Colors::Red;
-
 };
 
 #endif /* CONTROLLER_H */
