@@ -28,25 +28,25 @@ Driver::Driver(Pins p) {
     digitalWrite(pins.in4, LOW);
 }
 
-void Driver::SetDirectionMotorA(Direction direction) {
+void Driver::SetDirectionMotorA(MotorDirection direction) {
     m_Direction = direction;
     digitalWrite(pins.in1, (u8)direction & BIT1);
     digitalWrite(pins.in2, (u8)direction & BIT0);
 }
 
-void Driver::SetDirectionMotorB(Direction direction) {
+void Driver::SetDirectionMotorB(MotorDirection direction) {
     m_Direction = direction;
     digitalWrite(pins.in3, (u8)direction & BIT1);
     digitalWrite(pins.in4, (u8)direction & BIT0);
 }
 
 void Driver::SetSpeedMotorA(u8 speed) {
-    m_SpeedA = (f32) _clamp(2 * speed, 0, UINT8_MAX);
+    m_SpeedA = (f32) _clamp<u8>(2 * speed, 0, UINT8_MAX);
     analogWrite(pins.enA, (u8) m_SpeedA);
 }
 
 void Driver::SetSpeedMotorB(u8 speed) {
-    m_SpeedB = (f32) _clamp(2 * speed, 0, UINT8_MAX);
+    m_SpeedB = (f32) _clamp<u8>(2 * speed, 0, UINT8_MAX);
     analogWrite(pins.enB, (u8) m_SpeedB);
 }
 

@@ -6,6 +6,10 @@
 
 
 class Controller {
+    typedef struct StickPosition {
+        u8 x = 0;
+        u8 y = 0;
+    } StickPosition;
 public:
     void Init(const std::string& mac);
 
@@ -34,7 +38,7 @@ public:
     bool Connected();
 
     StickPosition LStickPosition();
-    StickPosition GetRStickPosition();
+    StickPosition RStickPosition();
 
     void SetBatteryColor(Colors color);
 

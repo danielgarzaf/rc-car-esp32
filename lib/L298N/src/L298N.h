@@ -17,7 +17,7 @@ typedef uint32_t u32;
 typedef float    f32;
 typedef double   f64;
 
-enum class Direction {
+enum class MotorDirection {
     None = 0b00,
     Forward = 0b10,
     Backward = 0b01,
@@ -53,14 +53,14 @@ public:
     Pins pins;
     u8 m_SpeedA;
     u8 m_SpeedB;
-    Direction m_Direction;
+    MotorDirection m_Direction;
 
 public:
     Driver();
     Driver(Pins pins);
 
-    void SetDirectionMotorA(Direction direction);
-    void SetDirectionMotorB(Direction direction);
+    void SetDirectionMotorA(MotorDirection direction);
+    void SetDirectionMotorB(MotorDirection direction);
 
     /* Speed ranges from 0-255 (PWM: 0-100%) */
     void SetSpeedMotorA(u8 speed);
@@ -70,19 +70,22 @@ public:
     u8 SpeedB() const;
 };
 
-static i32 my_max(i32 val1, i32 val2) {
+template<typename T>
+static T inline my_max(T val1, T val2) {
     if (val1 >= val2)
         return val1;
     return val2;
 }
 
-static i32 my_min(i32 val1, i32 val2) {
+template<typename T>
+static T inline my_min(T val1, T val2) {
     if (val1 <= val2)
         return val1;
     return val2;
 }
 
-static i32 _clamp(i32 val, i32 minVal, i32 maxVal) {
+template<typename T>
+static T inline _clamp(T val, T minVal, T maxVal) {
     return my_min(my_max(val, minVal), maxVal);
 }
 

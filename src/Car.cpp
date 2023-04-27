@@ -1,5 +1,6 @@
 #include "Car.h"
 #include "types.h"
+#include "utils.h"
 #include <stdint.h>
 
 #define MAX_FORWARD_THROTTLE 1000
@@ -27,8 +28,9 @@ Car::Car(
 /********************* CONSTRUCTORS END **************************************/
 
 /************************* PUBLIC START **************************************/
-void Car::Init(const std::string& mac) {
+void Car::Init(const std::string& mac, u64 clockSpeedHz) {
     m_Controller.Init(mac);
+    m_ClockSpeedHz = clockSpeedHz;
 }
 
 void Car::Update() {
@@ -75,23 +77,25 @@ u8 Car::SpeedB() const {
 
 /************************* PRIVATE START *************************************/
 f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2) {
+    /* If first trigger has a value, proportionally accelerate */
     if (triggerVal1 > 0) {
         throttle += triggerVal1 * m_Acceleration ;
     }
+    /* Otherwise, naturally deccelerate */
     else {
         throttle -= m_Decceleration * DECCELERATION_FACTOR;
     }
 
+    /* If second trigger has a value, proportionally deccelerate */
     if (triggerVal2 > 0) {
         throttle -= triggerVal2 * m_Decceleration;
     } 
 
     if (m_BackwardThrottle == 0.0f) {
-        throttle = (f32) _clamp_i32(throttle, 0, MAX_FORWARD_THROTTLE);
+        throttle = (f32) _clamp<i32>(throttle, 0, MAX_FORWARD_THROTTLE);
     }
-
     if (m_ForwardThrottle == 0.0f) {
-        throttle = (f32) _clamp_i32(throttle, 0, MAX_BACKWARD_THROTTLE);
+        throttle = (f32) _clamp<i32>(throttle, 0, MAX_BACKWARD_THROTTLE);
     }
     return throttle;
 }
@@ -102,19 +106,19 @@ void Car::updateThrottle() {
 
     if (m_BackwardThrottle == 0.0f) {
         m_ForwardThrottle = handleThrottle(m_ForwardThrottle, rightTriggerVal, leftTriggerVal);
-        m_MotorDriver.SetDirectionMotorA(L298N::Direction::Backward);
-        m_MotorDriver.SetDirectionMotorB(L298N::Direction::Backward);
+        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Backward);
+        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Backward);
     }
 
     if (m_ForwardThrottle == 0.0f) {
         m_BackwardThrottle = handleThrottle(m_BackwardThrottle, leftTriggerVal, rightTriggerVal);
-        m_MotorDriver.SetDirectionMotorA(L298N::Direction::Forward);
-        m_MotorDriver.SetDirectionMotorB(L298N::Direction::Forward);
+        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Forward);
+        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Forward);
     }
 
     if (m_ForwardThrottle == 0.0f && m_BackwardThrottle == 0.0f) {
-        m_MotorDriver.SetDirectionMotorA(L298N::Direction::None);
-        m_MotorDriver.SetDirectionMotorB(L298N::Direction::None);
+        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::None);
+        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::None);
     }
 
 }
@@ -124,12 +128,12 @@ void Car::updateMotors() {
     updateSteerDirection(xPos);
 
     f32 linearizedDirection = 0.0f;
-    if (m_SteerDirection == CarSteerDirection::Left) {
+    if (m_SteerDirection == SteerDirection::Left) {
         linearizedDirection = xPos - INT8_MAX;
     } else {
         linearizedDirection = INT8_MAX + xPos;
     }
-    linearizedDirection = _clamp_i32(linearizedDirection, 0, UINT8_MAX);
+    linearizedDirection = _clamp<i32>(linearizedDirection, 0, UINT8_MAX);
     m_DirectionValue = linearizedDirection;
 
     f32 throttlePercent = 0.0f;
@@ -137,7 +141,7 @@ void Car::updateMotors() {
         throttlePercent = m_ForwardThrottle / MAX_FORWARD_THROTTLE;
     if (m_ForwardThrottle == 0.0f)
         throttlePercent = m_BackwardThrottle / MAX_BACKWARD_THROTTLE;
-    
+
     /* 0-126: start turning left */
     u8 analogValue = (u8) (throttlePercent * (UINT8_MAX - linearizedDirection));
     m_MotorDriver.SetSpeedMotorB(analogValue);
@@ -151,13 +155,13 @@ void Car::updateMotors() {
 }
 
 void Car::updateSteerDirection(u8 xPos) {
-    if (m_SteerDirection == CarSteerDirection::Left &&
+    if (m_SteerDirection == SteerDirection::Left &&
             !(xPos >= INT8_MAX && xPos <= UINT8_MAX))  {
-        m_SteerDirection = CarSteerDirection::Right;
+        m_SteerDirection = SteerDirection::Right;
     }
-    else if (m_SteerDirection == CarSteerDirection::Right &&
+    else if (m_SteerDirection == SteerDirection::Right &&
             !(xPos >= 0 && xPos <= INT8_MAX)) {
-        m_SteerDirection = CarSteerDirection::Left;
+        m_SteerDirection = SteerDirection::Left;
     }
 }
 
@@ -196,7 +200,7 @@ void Car::updateAcceleration() {
         pressingDown = false;
     }
 
-    m_Acceleration = _clamp_f32(m_Acceleration, 0.0f, 1.0f);
+    m_Acceleration = _clamp<f32>(m_Acceleration, 0.0f, 1.0f);
 }
 
 void Car::updateDecceleration() {
@@ -219,6 +223,6 @@ void Car::updateDecceleration() {
     else if (!pressed && pressingLeft) {
         pressingLeft = false;
     }
-    m_Decceleration = _clamp_f32(m_Decceleration, DELTA_ACCEL, 1.0f);
+    m_Decceleration = _clamp<f32>(m_Decceleration, DELTA_ACCEL, 1.0f);
 }
 /*************************** PRIVATE END *************************************/

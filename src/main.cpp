@@ -12,7 +12,7 @@
 #define BATTERY_PIN 26
 #define MAC_ADDRESS "5c:50:d9:e4:a5:c2"
 
-u32 cpuClockSpeed = getCpuFrequencyMhz();
+u64 cpuClockSpeedHz = getXtalFrequencyMhz() * 1e6;
 Car car( 
         EN_A_PIN,
         EN_B_PIN,
@@ -32,11 +32,13 @@ f32 lastDecceleration = 0.0f;
 
 void waitForController() {
     /* Not using "delay" function to always listen for controller connection */
-    u32 delay_s = 3;
+    const u8 DELAY_S = 5;
     u32 timer = 0;
+    Serial.print("Frequency Hz ");
+    Serial.println(cpuClockSpeedHz);
     while (!car.ControllerConnected()) {
         timer++;
-        if (timer == (cpuClockSpeed * delay_s * 10000)) {
+        if (timer == (cpuClockSpeedHz * DELAY_S)) {
             log_e("Controller disconnected");
             timer = 0;
         }
@@ -46,7 +48,7 @@ void waitForController() {
 void setup() {
     Serial.begin(115200);
     std::string mac(MAC_ADDRESS);
-    car.Init(mac);
+    car.Init(mac, cpuClockSpeedHz);
     Serial.println("Setup complete!");
 }
 
@@ -92,8 +94,8 @@ void loop() {
     lastAcceleration = car.Acceleration();
     lastDecceleration = car.Decceleration();
 #endif
-    /* TODO: Use ESP32 timers to increase throttle. This would result in less
-     * missed inputs */
+    /* TODO: Work out a better way to increase throttle. Currently, acceleration 
+     * doesn't take the clock speed into account */
     delay(10);
 }
 

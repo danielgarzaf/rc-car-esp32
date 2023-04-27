@@ -16,11 +16,6 @@ typedef int64_t i64;
 typedef float  f32;
 typedef double f64;
 
-enum class DeviceState {
-    Initialized,
-    Uninitialized,
-};
-
 enum Colors {
         /** r = 255, g = 0, b = 0 */
         Red = 0xFF0000,
@@ -42,10 +37,5 @@ enum Colors {
         /** r = 0, g = 0, b = 0 */
         Off = 0x00,
 };
-
-typedef struct StickPosition {
-    u8 x = 0;
-    u8 y = 0;
-} StickPosition;
 
 #endif
