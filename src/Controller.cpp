@@ -36,14 +36,14 @@ bool Controller::Connected() {
 
 Controller::StickPosition Controller::LStickPosition() {
     StickPosition stickPosition;
-    stickPosition.x = PS4.LStickX(); /* Seems like the sticks are reversed? */
+    stickPosition.x = PS4.LStickX();
     stickPosition.y = PS4.LStickY();
     return stickPosition;
 }
 
 Controller::StickPosition Controller::RStickPosition() {
     StickPosition stickPosition;
-    stickPosition.x = PS4.RStickX(); /* Seems like the sticks are reversed? */
+    stickPosition.x = PS4.RStickX();
     stickPosition.y = PS4.RStickY();
     return stickPosition;
 }
