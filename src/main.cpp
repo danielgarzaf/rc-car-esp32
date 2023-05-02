@@ -12,7 +12,7 @@
 #define BATTERY_PIN 26
 #define MAC_ADDRESS "5c:50:d9:e4:a5:c2"
 
-u64 cpuClockSpeedHz = getXtalFrequencyMhz() * 1e6;
+u64 cpuClockSpeedHz = getXtalFrequencyMhz() * 1e5;
 Car car( 
         EN_A_PIN,
         EN_B_PIN,
@@ -34,8 +34,6 @@ void waitForController() {
     /* Not using "delay" function to always listen for controller connection */
     const u8 DELAY_S = 5;
     u32 timer = 0;
-    Serial.print("Frequency Hz ");
-    Serial.println(cpuClockSpeedHz);
     while (!car.ControllerConnected()) {
         timer++;
         if (timer == (cpuClockSpeedHz * DELAY_S)) {
@@ -48,13 +46,13 @@ void waitForController() {
 void setup() {
     Serial.begin(115200);
     std::string mac(MAC_ADDRESS);
-    car.Init(mac, cpuClockSpeedHz);
+    car.Init(mac);
     Serial.println("Setup complete!");
 }
 
 void loop() {
     waitForController();
-    car.Update();
+    u32 lastTimeMS = millis();
 #ifdef DEBUG
     if (car.ForwardThrottle() > lastForwardThrottle || car.ForwardThrottle() < lastForwardThrottle) {
         Serial.print("Forward Throttle: " );
@@ -94,8 +92,7 @@ void loop() {
     lastAcceleration = car.Acceleration();
     lastDecceleration = car.Decceleration();
 #endif
-    /* TODO: Work out a better way to increase throttle. Currently, acceleration 
-     * doesn't take the clock speed into account */
-    delay(10);
+    u32 currentTimeMS = millis();
+    car.Update(currentTimeMS - lastTimeMS);
 }
 

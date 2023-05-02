@@ -41,12 +41,12 @@ void Driver::SetDirectionMotorB(MotorDirection direction) {
 }
 
 void Driver::SetSpeedMotorA(u8 speed) {
-    m_SpeedA = (f32) _clamp<u8>(2 * speed, 0, UINT8_MAX);
+    m_SpeedA = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
     analogWrite(pins.enA, (u8) m_SpeedA);
 }
 
 void Driver::SetSpeedMotorB(u8 speed) {
-    m_SpeedB = (f32) _clamp<u8>(2 * speed, 0, UINT8_MAX);
+    m_SpeedB = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
     analogWrite(pins.enB, (u8) m_SpeedB);
 }
 

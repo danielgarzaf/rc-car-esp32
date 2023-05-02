@@ -31,8 +31,8 @@ public:
         u8 in4
     );
 
-    void Init(const std::string& mac, u64 clockSpeedHz);
-    void Update();
+    void Init(const std::string& mac);
+    void Update(u32 currentTime);
 
     bool ControllerConnected();
 
@@ -61,20 +61,18 @@ private:
     u32 m_DirectionValue = 0;
     u32 m_Battery = 0;
 
-    u64 m_ClockSpeedHz = 0;
-
     const f32 DELTA_ACCEL = 0.1f;
-    const u8 DECCELERATION_FACTOR = 1;
+    const u8 DECCELERATION_FACTOR = 50;
 
 private:
-    void updateThrottle();
+    void updateThrottle(u32 deltaTimeMS);
     void updateMotors();
     void updateControllerBatteryColor();
-    void updateSteerDirection(u8 xPos);
     void updateAcceleration();
     void updateDecceleration();
+    void updateSteerDirection(i8 xPos);
 
-    f32 handleThrottle(f32 throttle, u8 rightTriggerVal, u8 leftTriggerVal);
+    f32 handleThrottle(f32 throttle, u8 rightTriggerVal, u8 leftTriggerVal, u32 deltaTimeMS);
 };
 
 #endif /* CAR_H */

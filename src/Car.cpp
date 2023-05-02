@@ -1,7 +1,9 @@
 #include "Car.h"
 #include "types.h"
 #include "utils.h"
+#include "esp_sntp.h"
 #include <stdint.h>
+
 
 #define MAX_FORWARD_THROTTLE 1000
 #define MAX_BACKWARD_THROTTLE 1000
@@ -28,13 +30,12 @@ Car::Car(
 /********************* CONSTRUCTORS END **************************************/
 
 /************************* PUBLIC START **************************************/
-void Car::Init(const std::string& mac, u64 clockSpeedHz) {
+void Car::Init(const std::string& mac) {
     m_Controller.Init(mac);
-    m_ClockSpeedHz = clockSpeedHz;
 }
 
-void Car::Update() {
-    updateThrottle();
+void Car::Update(u32 deltaTimeMS) {
+    updateThrottle(deltaTimeMS);
     updateMotors();
     updateAcceleration();
     updateDecceleration();
@@ -76,19 +77,19 @@ u8 Car::SpeedB() const {
 /************************* PUBLIC END ****************************************/
 
 /************************* PRIVATE START *************************************/
-f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2) {
+f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2, u32 deltaTimeMS) {
     /* If first trigger has a value, proportionally accelerate */
     if (triggerVal1 > 0) {
-        throttle += triggerVal1 * m_Acceleration ;
+        throttle += (triggerVal1 * m_Acceleration * deltaTimeMS);
     }
     /* Otherwise, naturally deccelerate */
     else {
-        throttle -= m_Decceleration * DECCELERATION_FACTOR;
+        throttle -= (m_Decceleration * DECCELERATION_FACTOR * deltaTimeMS);
     }
 
     /* If second trigger has a value, proportionally deccelerate */
     if (triggerVal2 > 0) {
-        throttle -= triggerVal2 * m_Decceleration;
+        throttle -= (triggerVal2 * m_Decceleration * deltaTimeMS);
     } 
 
     if (m_BackwardThrottle == 0.0f) {
@@ -100,20 +101,21 @@ f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2) {
     return throttle;
 }
 
-void Car::updateThrottle() {
+void Car::updateThrottle(u32 deltaTimeMS) {
     u8 rightTriggerVal = m_Controller.RightTriggerValue();
     u8 leftTriggerVal = m_Controller.LeftTriggerValue();
 
+
     if (m_BackwardThrottle == 0.0f) {
-        m_ForwardThrottle = handleThrottle(m_ForwardThrottle, rightTriggerVal, leftTriggerVal);
-        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Backward);
-        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Backward);
+        m_ForwardThrottle = handleThrottle(m_ForwardThrottle, rightTriggerVal, leftTriggerVal, deltaTimeMS);
+        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Forward);
+        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Forward);
     }
 
     if (m_ForwardThrottle == 0.0f) {
-        m_BackwardThrottle = handleThrottle(m_BackwardThrottle, leftTriggerVal, rightTriggerVal);
-        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Forward);
-        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Forward);
+        m_BackwardThrottle = handleThrottle(m_BackwardThrottle, leftTriggerVal, rightTriggerVal, deltaTimeMS);
+        m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Backward);
+        m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Backward);
     }
 
     if (m_ForwardThrottle == 0.0f && m_BackwardThrottle == 0.0f) {
@@ -124,16 +126,10 @@ void Car::updateThrottle() {
 }
 
 void Car::updateMotors() {
-    u8 xPos = m_Controller.LStickPosition().x;
+    i8 xPos = m_Controller.LStickPosition().x;
     updateSteerDirection(xPos);
 
-    f32 linearizedDirection = 0.0f;
-    if (m_SteerDirection == SteerDirection::Left) {
-        linearizedDirection = xPos - INT8_MAX;
-    } else {
-        linearizedDirection = INT8_MAX + xPos;
-    }
-    linearizedDirection = _clamp<i32>(linearizedDirection, 0, UINT8_MAX);
+    u32 linearizedDirection = map(xPos, INT8_MIN, INT8_MAX, 0, UINT8_MAX);
     m_DirectionValue = linearizedDirection;
 
     f32 throttlePercent = 0.0f;
@@ -154,13 +150,11 @@ void Car::updateMotors() {
     m_MotorDriver.SetSpeedMotorA(analogValue);
 }
 
-void Car::updateSteerDirection(u8 xPos) {
-    if (m_SteerDirection == SteerDirection::Left &&
-            !(xPos >= INT8_MAX && xPos <= UINT8_MAX))  {
+void Car::updateSteerDirection(i8 xPos) {
+    if (xPos > 0 && xPos <= INT8_MAX)  {
         m_SteerDirection = SteerDirection::Right;
     }
-    else if (m_SteerDirection == SteerDirection::Right &&
-            !(xPos >= 0 && xPos <= INT8_MAX)) {
+    else if (xPos <= 0 && xPos >= INT8_MIN) {
         m_SteerDirection = SteerDirection::Left;
     }
 }
