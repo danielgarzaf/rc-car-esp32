@@ -32,7 +32,7 @@ public:
     );
 
     void Init(const std::string& mac);
-    void Update(u32 currentTime);
+    void Update(u32 deltaTimeMS);
 
     bool ControllerConnected();
 

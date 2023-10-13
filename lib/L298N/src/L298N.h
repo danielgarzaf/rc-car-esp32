@@ -23,6 +23,12 @@ enum class MotorDirection {
     Backward = 0b01,
 };
 
+typedef struct Motor {
+    MotorDirection direction = MotorDirection::None;
+    u8 speed = 0;
+} Motor;
+
+
 typedef struct Pins {
     /* Direction control pins for motor A (1 and 2) and motor B (3 and 4)
      * /----------------------------------------\
@@ -51,9 +57,8 @@ private:
 
 public:
     Pins pins;
-    u8 m_SpeedA;
-    u8 m_SpeedB;
-    MotorDirection m_Direction;
+    Motor m_MotorA;
+    Motor m_MotorB;
 
 public:
     Driver();
@@ -68,6 +73,9 @@ public:
 
     u8 SpeedA() const;
     u8 SpeedB() const;
+
+    MotorDirection DirectionA() const;
+    MotorDirection DirectionB() const;
 };
 
 template<typename T>

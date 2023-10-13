@@ -29,31 +29,39 @@ Driver::Driver(Pins p) {
 }
 
 void Driver::SetDirectionMotorA(MotorDirection direction) {
-    m_Direction = direction;
+    m_MotorA.direction = direction;
     digitalWrite(pins.in1, (u8)direction & BIT1);
     digitalWrite(pins.in2, (u8)direction & BIT0);
 }
 
 void Driver::SetDirectionMotorB(MotorDirection direction) {
-    m_Direction = direction;
+    m_MotorB.direction = direction;
     digitalWrite(pins.in3, (u8)direction & BIT1);
     digitalWrite(pins.in4, (u8)direction & BIT0);
 }
 
 void Driver::SetSpeedMotorA(u8 speed) {
-    m_SpeedA = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
-    analogWrite(pins.enA, (u8) m_SpeedA);
+    m_MotorA.speed = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
+    analogWrite(pins.enA, (u8) m_MotorA.speed);
 }
 
 void Driver::SetSpeedMotorB(u8 speed) {
-    m_SpeedB = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
-    analogWrite(pins.enB, (u8) m_SpeedB);
+    m_MotorB.speed = (u8) _clamp<u32>(2 * speed, 0, UINT8_MAX);
+    analogWrite(pins.enB, (u8) m_MotorB.speed);
 }
 
 u8 Driver::SpeedA() const {
-    return m_SpeedA;
+    return m_MotorA.speed;
 }
 
 u8 Driver::SpeedB() const {
-    return m_SpeedB;
+    return m_MotorB.speed;
+}
+
+MotorDirection Driver::DirectionA() const {
+    return m_MotorA.direction;
+}
+
+MotorDirection Driver::DirectionB() const {
+    return m_MotorB.direction;
 }

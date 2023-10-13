@@ -77,20 +77,22 @@ u8 Car::SpeedB() const {
 /************************* PUBLIC END ****************************************/
 
 /************************* PRIVATE START *************************************/
+
+/* Give priority to the first trigger value over the second */
 f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2, u32 deltaTimeMS) {
     /* If first trigger has a value, proportionally accelerate */
     if (triggerVal1 > 0) {
         throttle += (triggerVal1 * m_Acceleration * deltaTimeMS);
     }
+    /* If second trigger has a value, proportionally deccelerate */
+    else if (triggerVal2 > 0) {
+        throttle -= (triggerVal2 * m_Decceleration * deltaTimeMS);
+    } 
     /* Otherwise, naturally deccelerate */
     else {
         throttle -= (m_Decceleration * DECCELERATION_FACTOR * deltaTimeMS);
     }
 
-    /* If second trigger has a value, proportionally deccelerate */
-    if (triggerVal2 > 0) {
-        throttle -= (triggerVal2 * m_Decceleration * deltaTimeMS);
-    } 
 
     if (m_BackwardThrottle == 0.0f) {
         throttle = (f32) _clamp<i32>(throttle, 0, MAX_FORWARD_THROTTLE);
@@ -105,15 +107,22 @@ void Car::updateThrottle(u32 deltaTimeMS) {
     u8 rightTriggerVal = m_Controller.RightTriggerValue();
     u8 leftTriggerVal = m_Controller.LeftTriggerValue();
 
-
     if (m_BackwardThrottle == 0.0f) {
-        m_ForwardThrottle = handleThrottle(m_ForwardThrottle, rightTriggerVal, leftTriggerVal, deltaTimeMS);
+        m_ForwardThrottle = handleThrottle(
+                m_ForwardThrottle,
+                rightTriggerVal,
+                leftTriggerVal,
+                deltaTimeMS);
         m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Forward);
         m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Forward);
     }
 
     if (m_ForwardThrottle == 0.0f) {
-        m_BackwardThrottle = handleThrottle(m_BackwardThrottle, leftTriggerVal, rightTriggerVal, deltaTimeMS);
+        m_BackwardThrottle = handleThrottle(
+                m_BackwardThrottle,
+                leftTriggerVal,
+                rightTriggerVal,
+                deltaTimeMS);
         m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Backward);
         m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Backward);
     }
@@ -174,48 +183,48 @@ void Car::updateControllerBatteryColor() {
 }
 
 void Car::updateAcceleration() {
-    static bool pressingUp = false;
-    bool pressed = m_Controller.DPadUp();
-    if (pressed && !pressingUp) {
+    static bool stickyUp = false;
+    bool pressing = m_Controller.DPadUp();
+    if (pressing && !stickyUp) {
         m_Acceleration += DELTA_ACCEL;
-        pressingUp = true;
+        stickyUp = true;
     }
-    else if (!pressed && pressingUp) {
-        pressingUp = false;
+    else if (!pressing && stickyUp) {
+        stickyUp = false;
     }
 
-    static bool pressingDown = false;
-    pressed = m_Controller.DPadDown();
-    if (pressed && !pressingDown) {
+    static bool stickyDown = false;
+    pressing = m_Controller.DPadDown();
+    if (pressing && !stickyDown) {
         m_Acceleration -= DELTA_ACCEL;
-        pressingDown = true;
+        stickyDown = true;
     }
-    else if (!pressed && pressingDown) {
-        pressingDown = false;
+    else if (!pressing && stickyDown) {
+        stickyDown = false;
     }
 
     m_Acceleration = _clamp<f32>(m_Acceleration, 0.0f, 1.0f);
 }
 
 void Car::updateDecceleration() {
-    static bool pressingRight = false;
-    bool pressed = m_Controller.DPadRight();
-    if (pressed && !pressingRight) {
+    static bool stickyRight = false;
+    bool pressing = m_Controller.DPadRight();
+    if (pressing && !stickyRight) {
         m_Decceleration += DELTA_ACCEL;
-        pressingRight = true;
+        stickyRight = true;
     }
-    else if (!pressed && pressingRight) {
-        pressingRight = false;
+    else if (!pressing && stickyRight) {
+        stickyRight = false;
     }
 
-    static bool pressingLeft = false;
-    pressed = m_Controller.DPadLeft();
-    if (pressed && !pressingLeft) {
+    static bool stickyLeft = false;
+    pressing = m_Controller.DPadLeft();
+    if (pressing && !stickyLeft) {
         m_Decceleration -= DELTA_ACCEL;
-        pressingLeft = true;
+        stickyLeft = true;
     }
-    else if (!pressed && pressingLeft) {
-        pressingLeft = false;
+    else if (!pressing && stickyLeft) {
+        stickyLeft = false;
     }
     m_Decceleration = _clamp<f32>(m_Decceleration, DELTA_ACCEL, 1.0f);
 }
