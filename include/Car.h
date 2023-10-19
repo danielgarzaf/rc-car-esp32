@@ -60,9 +60,12 @@ private:
 
     u32 m_DirectionValue = 0;
     u32 m_Battery = 0;
+    u32 m_CurrentTimeMS = 0;
+    u32 m_LastUpdateTimeMS = 0;
 
     const f32 DELTA_ACCEL = 0.1f;
     const u8 DECCELERATION_FACTOR = 50;
+    const u8 THROTTLE_UPDATE_INTERVAL_MS = 100;
 
 private:
     void updateThrottle(u32 deltaTimeMS);
@@ -72,7 +75,12 @@ private:
     void updateDecceleration();
     void updateSteerDirection(i8 xPos);
 
-    f32 handleThrottle(f32 throttle, u8 rightTriggerVal, u8 leftTriggerVal, u32 deltaTimeMS);
+    f32 handleThrottle(
+            f32 throttle,
+            u8 rightTriggerVal,
+            u8 leftTriggerVal,
+            f32 timeConstant) 
+        const;
 };
 
 #endif /* CAR_H */

@@ -79,18 +79,23 @@ u8 Car::SpeedB() const {
 /************************* PRIVATE START *************************************/
 
 /* Give priority to the first trigger value over the second */
-f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2, u32 deltaTimeMS) {
+f32 Car::handleThrottle(
+        f32 throttle,
+        u8 triggerVal1,
+        u8 triggerVal2,
+        f32 timeConstant)
+    const {
     /* If first trigger has a value, proportionally accelerate */
     if (triggerVal1 > 0) {
-        throttle += (triggerVal1 * m_Acceleration * deltaTimeMS);
+        throttle += (triggerVal1 * m_Acceleration * timeConstant);
     }
     /* If second trigger has a value, proportionally deccelerate */
     else if (triggerVal2 > 0) {
-        throttle -= (triggerVal2 * m_Decceleration * deltaTimeMS);
+        throttle -= (triggerVal2 * m_Decceleration * timeConstant);
     } 
     /* Otherwise, naturally deccelerate */
     else {
-        throttle -= (m_Decceleration * DECCELERATION_FACTOR * deltaTimeMS);
+        throttle -= (m_Decceleration * DECCELERATION_FACTOR * timeConstant);
     }
 
 
@@ -104,6 +109,13 @@ f32 Car::handleThrottle(f32 throttle, u8 triggerVal1, u8 triggerVal2, u32 deltaT
 }
 
 void Car::updateThrottle(u32 deltaTimeMS) {
+    m_CurrentTimeMS += deltaTimeMS;
+    if ((m_CurrentTimeMS - m_LastUpdateTimeMS) < THROTTLE_UPDATE_INTERVAL_MS) {
+        return;
+    }
+    m_LastUpdateTimeMS = m_CurrentTimeMS;
+
+    f32 timeConstant = (f32)(m_CurrentTimeMS - m_LastUpdateTimeMS) / (f32)THROTTLE_UPDATE_INTERVAL_MS;
     u8 rightTriggerVal = m_Controller.RightTriggerValue();
     u8 leftTriggerVal = m_Controller.LeftTriggerValue();
 
@@ -112,7 +124,7 @@ void Car::updateThrottle(u32 deltaTimeMS) {
                 m_ForwardThrottle,
                 rightTriggerVal,
                 leftTriggerVal,
-                deltaTimeMS);
+                timeConstant);
         m_MotorDriver.SetDirectionMotorA(L298N::MotorDirection::Forward);
         m_MotorDriver.SetDirectionMotorB(L298N::MotorDirection::Forward);
     }
